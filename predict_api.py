@@ -60,6 +60,29 @@ def load_model():
 model    = load_model()
 scaler_X = joblib.load('exported_model/scaler_X.pkl')
 
+ALL_TICKERS = [
+    '2222.SR','1120.SR','2010.SR','7010.SR','1180.SR',
+    '1150.SR','1010.SR','1211.SR','2290.SR','2060.SR',
+    '6010.SR','1020.SR','7020.SR','4190.SR','2082.SR',
+    '4030.SR','4009.SR','4264.SR',
+]
+
+def _warm_cache():
+    try:
+        raw = yf.download(ALL_TICKERS, period='6mo', auto_adjust=True, progress=False, session=_yf_session(), group_by='ticker')
+        now = time.time()
+        for ticker in ALL_TICKERS:
+            try:
+                df = raw[ticker][['Open','High','Low','Close','Volume']].dropna()
+                if len(df) >= 50:
+                    _cache[ticker] = (df, now)
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+_warm_cache()
+
 # ---------------------------------------------------------------------------
 # Helpers (must match the notebook exactly)
 # ---------------------------------------------------------------------------
