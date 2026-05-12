@@ -7,6 +7,7 @@ import pandas as pd
 import yfinance as yf
 import xgboost as xgb
 import os
+import requests
 
 app = Flask(__name__)
 CORS(app)
@@ -60,8 +61,13 @@ scaler_X = joblib.load('exported_model/scaler_X.pkl')
 # Helpers (must match the notebook exactly)
 # ---------------------------------------------------------------------------
 
+def _yf_session():
+    s = requests.Session()
+    s.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36'})
+    return s
+
 def fetch_stock(ticker: str) -> pd.DataFrame:
-    raw = yf.download(ticker, period='6mo', auto_adjust=True, progress=False)
+    raw = yf.download(ticker, period='6mo', auto_adjust=True, progress=False, session=_yf_session())
     if isinstance(raw.columns, pd.MultiIndex):
         raw.columns = raw.columns.get_level_values(0)
     return raw[['Open', 'High', 'Low', 'Close', 'Volume']].dropna()
