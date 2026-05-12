@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip --version)",
+      "Bash(npx tsc *)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "mcp__claude_ai_Supabase__execute_sql",
+      "Bash(npm run *)",
+      "Bash(npm install *)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx|js|json|md\\)$\")",
+      "Bash(grep -v \"^\\\\.$\\\\|^\\\\.\\\\.$\")",
+      "Bash(python -c \"import joblib; m = joblib.load\\('exported_model/best_model.pkl'\\); print\\(type\\(m\\).__name__\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(python predict_api.py)",
+      "mcp__claude_ai_Supabase__list_projects",
+      "mcp__claude_ai_Supabase__list_tables",
+      "mcp__claude_ai_Supabase__apply_migration",
+      "mcp__claude_ai_Supabase__deploy_edge_function",
+      "mcp__claude_ai_Supabase__get_logs",
+      "Bash(del \"c:\\\\Users\\\\KSA\\\\Downloads\\\\موقع_ويب_للمستثمر_الصغير_محدث\\\\موقع_ويب_للمستثمر_الصغير_محدث\\\\ml_stock_analysis.py\")",
+      "Bash(curl -s http://localhost:5000/health)",
+      "Bash(curl -s -X POST http://localhost:5000/portfolio -H \"Content-Type: application/json\" -d \"{\\\\\"stocks\\\\\":[{\\\\\"ticker\\\\\":\\\\\"2222.SR\\\\\",\\\\\"name\\\\\":\\\\\"أرامكو\\\\\",\\\\\"sector\\\\\":\\\\\"طاقة\\\\\"},{\\\\\"ticker\\\\\":\\\\\"1120.SR\\\\\",\\\\\"name\\\\\":\\\\\"الراجحي\\\\\",\\\\\"sector\\\\\":\\\\\"بنوك\\\\\"},{\\\\\"ticker\\\\\":\\\\\"2010.SR\\\\\",\\\\\"name\\\\\":\\\\\"سابك\\\\\",\\\\\"sector\\\\\":\\\\\"بتروكيماويات\\\\\"}],\\\\\"horizon\\\\\":\\\\\"long\\\\\",\\\\\"amount\\\\\":50000}\")",
+      "Bash(curl -s -X POST http://localhost:5000/predict -H \"Content-Type: application/json\" -d \"{\\\\\"ticker\\\\\":\\\\\"2222.SR\\\\\"}\")",
+      "Bash(curl -s -X POST http://127.0.0.1:5000/portfolio -H \"Content-Type: application/json\" -d \"{\\\\\"stocks\\\\\":[{\\\\\"ticker\\\\\":\\\\\"2222.SR\\\\\",\\\\\"name\\\\\":\\\\\"أرامكو\\\\\",\\\\\"sector\\\\\":\\\\\"طاقة\\\\\"}],\\\\\"horizon\\\\\":\\\\\"long\\\\\",\\\\\"amount\\\\\":10000}\")"
+    ]
+  }
+}

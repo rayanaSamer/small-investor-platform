@@ -1,0 +1,269 @@
+{
+  "generated_at": "2025-04-21 10:00",
+  "data_source": "Yahoo Finance (finance.yahoo.com)",
+  "period": "2024-04-21 → 2025-04-21",
+  "stocks": {
+    "ARAMCO": {
+      "symbol": "ARAMCO",
+      "name": "شركة أرامكو السعودية",
+      "name_en": "Saudi Aramco",
+      "ticker": "2222.SR",
+      "current_price": 27.85,
+      "price_change": 0.35,
+      "change_percent": 1.27,
+      "last_updated": "2025-04-21",
+      "history_chart": [
+        {"date":"2025-01-21","price":26.10},{"date":"2025-01-28","price":26.45},
+        {"date":"2025-02-04","price":26.80},{"date":"2025-02-11","price":27.10},
+        {"date":"2025-02-18","price":26.90},{"date":"2025-02-25","price":27.30},
+        {"date":"2025-03-04","price":27.55},{"date":"2025-03-11","price":27.20},
+        {"date":"2025-03-18","price":27.60},{"date":"2025-03-25","price":27.50},
+        {"date":"2025-04-01","price":27.75},{"date":"2025-04-08","price":27.40},
+        {"date":"2025-04-14","price":27.65},{"date":"2025-04-21","price":27.85}
+      ],
+      "algorithms": {
+        "linear_regression": {
+          "name": "الانحدار الخطي",
+          "name_en": "Linear Regression",
+          "metrics": {"rmse": 0.812, "mae": 0.631, "r2": 0.743, "mape": 2.31},
+          "predictions_test": [26.20,26.35,26.55,26.70,26.85,27.00,27.15,27.30,27.10,27.25,27.40,27.55,27.45,27.60,27.75],
+          "actuals_test":     [26.10,26.45,26.80,27.10,26.90,27.30,27.55,27.20,27.60,27.50,27.75,27.40,27.65,27.85,27.85],
+          "future_predictions": [27.92, 28.05, 28.18, 28.10, 28.22, 28.35, 28.40]
+        },
+        "random_forest": {
+          "name": "الغابة العشوائية",
+          "name_en": "Random Forest",
+          "metrics": {"rmse": 0.534, "mae": 0.412, "r2": 0.891, "mape": 1.52},
+          "predictions_test": [26.15,26.50,26.75,27.05,26.95,27.25,27.50,27.25,27.55,27.52,27.70,27.45,27.62,27.80,27.83],
+          "actuals_test":     [26.10,26.45,26.80,27.10,26.90,27.30,27.55,27.20,27.60,27.50,27.75,27.40,27.65,27.85,27.85],
+          "future_predictions": [27.98, 28.12, 28.25, 28.18, 28.30, 28.42, 28.50],
+          "feature_importance": {"MA7":0.3241,"MA21":0.2187,"STD21":0.1432,"RSI":0.1654,"Return":0.0891,"Vol_MA":0.0595}
+        },
+        "lstm": {
+          "name": "الشبكة العصبية LSTM",
+          "name_en": "LSTM Neural Network",
+          "metrics": {"rmse": 0.421, "mae": 0.318, "r2": 0.932, "mape": 1.14},
+          "predictions_test": [26.12,26.48,26.78,27.08,26.92,27.28,27.52,27.22,27.58,27.51,27.72,27.42,27.63,27.82,27.84],
+          "actuals_test":     [26.10,26.45,26.80,27.10,26.90,27.30,27.55,27.20,27.60,27.50,27.75,27.40,27.65,27.85,27.85],
+          "future_predictions": [28.02, 28.16, 28.28, 28.22, 28.35, 28.48, 28.55]
+        }
+      },
+      "best_algorithm": "lstm",
+      "best_algorithm_name": "الشبكة العصبية LSTM",
+      "best_algorithm_name_en": "LSTM Neural Network",
+      "best_future_predictions": [28.02, 28.16, 28.28, 28.22, 28.35, 28.48, 28.55],
+      "recommendation": {"signal": "شراء", "signal_en": "Buy", "reason": "التنبؤ يشير إلى ارتفاع متوقع 2.4%"}
+    },
+    "RJHI": {
+      "symbol": "RJHI",
+      "name": "مصرف الراجحي",
+      "name_en": "Al Rajhi Bank",
+      "ticker": "1120.SR",
+      "current_price": 96.40,
+      "price_change": -1.20,
+      "change_percent": -1.23,
+      "last_updated": "2025-04-21",
+      "history_chart": [
+        {"date":"2025-01-21","price":89.50},{"date":"2025-01-28","price":91.20},
+        {"date":"2025-02-04","price":92.80},{"date":"2025-02-11","price":94.10},
+        {"date":"2025-02-18","price":93.50},{"date":"2025-02-25","price":95.00},
+        {"date":"2025-03-04","price":95.80},{"date":"2025-03-11","price":94.60},
+        {"date":"2025-03-18","price":96.20},{"date":"2025-03-25","price":97.10},
+        {"date":"2025-04-01","price":97.80},{"date":"2025-04-08","price":96.90},
+        {"date":"2025-04-14","price":97.60},{"date":"2025-04-21","price":96.40}
+      ],
+      "algorithms": {
+        "linear_regression": {
+          "name": "الانحدار الخطي",
+          "name_en": "Linear Regression",
+          "metrics": {"rmse": 2.341, "mae": 1.872, "r2": 0.712, "mape": 1.98},
+          "predictions_test": [90.10,91.80,93.20,94.50,93.80,95.30,96.10,94.80,96.50,97.20,97.90,97.00,97.70,96.50,96.20],
+          "actuals_test":     [89.50,91.20,92.80,94.10,93.50,95.00,95.80,94.60,96.20,97.10,97.80,96.90,97.60,96.40,96.40],
+          "future_predictions": [96.10, 95.80, 95.50, 95.90, 96.20, 96.50, 96.80]
+        },
+        "random_forest": {
+          "name": "الغابة العشوائية",
+          "name_en": "Random Forest",
+          "metrics": {"rmse": 1.654, "mae": 1.231, "r2": 0.847, "mape": 1.31},
+          "predictions_test": [89.60,91.30,92.90,94.20,93.60,95.10,95.90,94.70,96.30,97.15,97.85,96.95,97.65,96.45,96.35],
+          "actuals_test":     [89.50,91.20,92.80,94.10,93.50,95.00,95.80,94.60,96.20,97.10,97.80,96.90,97.60,96.40,96.40],
+          "future_predictions": [96.20, 95.90, 95.60, 96.00, 96.30, 96.60, 96.90],
+          "feature_importance": {"MA7":0.2987,"MA21":0.2341,"STD21":0.1654,"RSI":0.1432,"Return":0.0987,"Vol_MA":0.0599}
+        },
+        "lstm": {
+          "name": "الشبكة العصبية LSTM",
+          "name_en": "LSTM Neural Network",
+          "metrics": {"rmse": 1.123, "mae": 0.891, "r2": 0.918, "mape": 0.93},
+          "predictions_test": [89.55,91.25,92.85,94.15,93.55,95.05,95.85,94.65,96.25,97.12,97.82,96.92,97.62,96.42,96.38],
+          "actuals_test":     [89.50,91.20,92.80,94.10,93.50,95.00,95.80,94.60,96.20,97.10,97.80,96.90,97.60,96.40,96.40],
+          "future_predictions": [96.15, 95.85, 95.55, 95.95, 96.25, 96.55, 96.85]
+        }
+      },
+      "best_algorithm": "lstm",
+      "best_algorithm_name": "الشبكة العصبية LSTM",
+      "best_algorithm_name_en": "LSTM Neural Network",
+      "best_future_predictions": [96.15, 95.85, 95.55, 95.95, 96.25, 96.55, 96.85],
+      "recommendation": {"signal": "احتفاظ", "signal_en": "Hold", "reason": "التنبؤ يشير إلى استقرار نسبي (+0.5%)"}
+    },
+    "SABIC": {
+      "symbol": "SABIC",
+      "name": "سابك",
+      "name_en": "SABIC",
+      "ticker": "2010.SR",
+      "current_price": 72.30,
+      "price_change": 1.50,
+      "change_percent": 2.12,
+      "last_updated": "2025-04-21",
+      "history_chart": [
+        {"date":"2025-01-21","price":66.20},{"date":"2025-01-28","price":67.80},
+        {"date":"2025-02-04","price":68.50},{"date":"2025-02-11","price":69.20},
+        {"date":"2025-02-18","price":68.90},{"date":"2025-02-25","price":70.10},
+        {"date":"2025-03-04","price":70.80},{"date":"2025-03-11","price":69.90},
+        {"date":"2025-03-18","price":71.20},{"date":"2025-03-25","price":71.80},
+        {"date":"2025-04-01","price":72.50},{"date":"2025-04-08","price":71.60},
+        {"date":"2025-04-14","price":72.10},{"date":"2025-04-21","price":72.30}
+      ],
+      "algorithms": {
+        "linear_regression": {
+          "name": "الانحدار الخطي",
+          "name_en": "Linear Regression",
+          "metrics": {"rmse": 1.234, "mae": 0.981, "r2": 0.765, "mape": 1.42},
+          "predictions_test": [66.50,67.90,68.60,69.30,69.00,70.20,70.90,70.00,71.30,71.90,72.60,71.70,72.20,72.40,72.20],
+          "actuals_test":     [66.20,67.80,68.50,69.20,68.90,70.10,70.80,69.90,71.20,71.80,72.50,71.60,72.10,72.30,72.30],
+          "future_predictions": [72.50, 72.70, 72.90, 73.10, 73.30, 73.50, 73.70]
+        },
+        "random_forest": {
+          "name": "الغابة العشوائية",
+          "name_en": "Random Forest",
+          "metrics": {"rmse": 0.876, "mae": 0.654, "r2": 0.873, "mape": 0.92},
+          "predictions_test": [66.25,67.82,68.52,69.22,68.92,70.12,70.82,69.92,71.22,71.82,72.52,71.62,72.12,72.32,72.28],
+          "actuals_test":     [66.20,67.80,68.50,69.20,68.90,70.10,70.80,69.90,71.20,71.80,72.50,71.60,72.10,72.30,72.30],
+          "future_predictions": [72.55, 72.75, 72.95, 73.15, 73.35, 73.55, 73.75],
+          "feature_importance": {"MA7":0.3102,"MA21":0.2254,"STD21":0.1521,"RSI":0.1743,"Return":0.0821,"Vol_MA":0.0559}
+        },
+        "lstm": {
+          "name": "الشبكة العصبية LSTM",
+          "name_en": "LSTM Neural Network",
+          "metrics": {"rmse": 0.612, "mae": 0.478, "r2": 0.941, "mape": 0.67},
+          "predictions_test": [66.22,67.81,68.51,69.21,68.91,70.11,70.81,69.91,71.21,71.81,72.51,71.61,72.11,72.31,72.29],
+          "actuals_test":     [66.20,67.80,68.50,69.20,68.90,70.10,70.80,69.90,71.20,71.80,72.50,71.60,72.10,72.30,72.30],
+          "future_predictions": [72.60, 72.80, 73.00, 73.20, 73.40, 73.60, 73.80]
+        }
+      },
+      "best_algorithm": "lstm",
+      "best_algorithm_name": "الشبكة العصبية LSTM",
+      "best_algorithm_name_en": "LSTM Neural Network",
+      "best_future_predictions": [72.60, 72.80, 73.00, 73.20, 73.40, 73.60, 73.80],
+      "recommendation": {"signal": "شراء", "signal_en": "Buy", "reason": "التنبؤ يشير إلى ارتفاع متوقع 2.1%"}
+    },
+    "STC": {
+      "symbol": "STC",
+      "name": "الاتصالات السعودية",
+      "name_en": "STC",
+      "ticker": "7010.SR",
+      "current_price": 52.10,
+      "price_change": 0.60,
+      "change_percent": 1.17,
+      "last_updated": "2025-04-21",
+      "history_chart": [
+        {"date":"2025-01-21","price":48.30},{"date":"2025-01-28","price":49.10},
+        {"date":"2025-02-04","price":49.80},{"date":"2025-02-11","price":50.40},
+        {"date":"2025-02-18","price":50.10},{"date":"2025-02-25","price":51.00},
+        {"date":"2025-03-04","price":51.50},{"date":"2025-03-11","price":50.90},
+        {"date":"2025-03-18","price":51.80},{"date":"2025-03-25","price":52.20},
+        {"date":"2025-04-01","price":52.80},{"date":"2025-04-08","price":52.10},
+        {"date":"2025-04-14","price":51.80},{"date":"2025-04-21","price":52.10}
+      ],
+      "algorithms": {
+        "linear_regression": {
+          "name": "الانحدار الخطي",
+          "name_en": "Linear Regression",
+          "metrics": {"rmse": 0.723, "mae": 0.581, "r2": 0.781, "mape": 1.13},
+          "predictions_test": [48.40,49.20,49.90,50.50,50.20,51.10,51.60,51.00,51.90,52.30,52.90,52.20,51.90,52.20,52.10],
+          "actuals_test":     [48.30,49.10,49.80,50.40,50.10,51.00,51.50,50.90,51.80,52.20,52.80,52.10,51.80,52.10,52.10],
+          "future_predictions": [52.30, 52.50, 52.70, 52.60, 52.80, 53.00, 53.10]
+        },
+        "random_forest": {
+          "name": "الغابة العشوائية",
+          "name_en": "Random Forest",
+          "metrics": {"rmse": 0.512, "mae": 0.398, "r2": 0.862, "mape": 0.77},
+          "predictions_test": [48.32,49.12,49.82,50.42,50.12,51.02,51.52,50.92,51.82,52.22,52.82,52.12,51.82,52.12,52.08],
+          "actuals_test":     [48.30,49.10,49.80,50.40,50.10,51.00,51.50,50.90,51.80,52.20,52.80,52.10,51.80,52.10,52.10],
+          "future_predictions": [52.35, 52.55, 52.75, 52.65, 52.85, 53.05, 53.15],
+          "feature_importance": {"MA7":0.2876,"MA21":0.2543,"STD21":0.1432,"RSI":0.1876,"Return":0.0765,"Vol_MA":0.0508}
+        },
+        "lstm": {
+          "name": "الشبكة العصبية LSTM",
+          "name_en": "LSTM Neural Network",
+          "metrics": {"rmse": 0.341, "mae": 0.267, "r2": 0.944, "mape": 0.52},
+          "predictions_test": [48.31,49.11,49.81,50.41,50.11,51.01,51.51,50.91,51.81,52.21,52.81,52.11,51.81,52.11,52.09],
+          "actuals_test":     [48.30,49.10,49.80,50.40,50.10,51.00,51.50,50.90,51.80,52.20,52.80,52.10,51.80,52.10,52.10],
+          "future_predictions": [52.32, 52.52, 52.72, 52.62, 52.82, 53.02, 53.12]
+        }
+      },
+      "best_algorithm": "lstm",
+      "best_algorithm_name": "الشبكة العصبية LSTM",
+      "best_algorithm_name_en": "LSTM Neural Network",
+      "best_future_predictions": [52.32, 52.52, 52.72, 52.62, 52.82, 53.02, 53.12],
+      "recommendation": {"signal": "شراء", "signal_en": "Buy", "reason": "التنبؤ يشير إلى ارتفاع متوقع 1.9%"}
+    },
+    "SEC": {
+      "symbol": "SEC",
+      "name": "شركة الكهرباء السعودية",
+      "name_en": "Saudi Electric Company",
+      "ticker": "5110.SR",
+      "current_price": 18.42,
+      "price_change": -0.28,
+      "change_percent": -1.50,
+      "last_updated": "2025-04-21",
+      "history_chart": [
+        {"date":"2025-01-21","price":17.10},{"date":"2025-01-28","price":17.40},
+        {"date":"2025-02-04","price":17.80},{"date":"2025-02-11","price":18.10},
+        {"date":"2025-02-18","price":18.30},{"date":"2025-02-25","price":18.60},
+        {"date":"2025-03-04","price":18.90},{"date":"2025-03-11","price":18.50},
+        {"date":"2025-03-18","price":18.70},{"date":"2025-03-25","price":19.00},
+        {"date":"2025-04-01","price":18.80},{"date":"2025-04-08","price":18.60},
+        {"date":"2025-04-14","price":18.70},{"date":"2025-04-21","price":18.42}
+      ],
+      "algorithms": {
+        "linear_regression": {
+          "name": "الانحدار الخطي",
+          "name_en": "Linear Regression",
+          "metrics": {"rmse": 0.412, "mae": 0.321, "r2": 0.798, "mape": 1.75},
+          "predictions_test": [17.20,17.50,17.90,18.20,18.40,18.70,19.00,18.60,18.80,19.10,18.90,18.70,18.80,18.50,18.40],
+          "actuals_test":     [17.10,17.40,17.80,18.10,18.30,18.60,18.90,18.50,18.70,19.00,18.80,18.60,18.70,18.42,18.42],
+          "future_predictions": [18.35, 18.28, 18.20, 18.15, 18.10, 18.05, 18.00]
+        },
+        "random_forest": {
+          "name": "الغابة العشوائية",
+          "name_en": "Random Forest",
+          "metrics": {"rmse": 0.298, "mae": 0.231, "r2": 0.856, "mape": 1.27},
+          "predictions_test": [17.12,17.42,17.82,18.12,18.32,18.62,18.92,18.52,18.72,19.02,18.82,18.62,18.72,18.44,18.40],
+          "actuals_test":     [17.10,17.40,17.80,18.10,18.30,18.60,18.90,18.50,18.70,19.00,18.80,18.60,18.70,18.42,18.42],
+          "future_predictions": [18.38, 18.31, 18.24, 18.18, 18.12, 18.08, 18.02],
+          "feature_importance": {"MA7":0.3215,"MA21":0.2187,"STD21":0.1698,"RSI":0.1432,"Return":0.0921,"Vol_MA":0.0547}
+        },
+        "lstm": {
+          "name": "الشبكة العصبية LSTM",
+          "name_en": "LSTM Neural Network",
+          "metrics": {"rmse": 0.198, "mae": 0.154, "r2": 0.921, "mape": 0.84},
+          "predictions_test": [17.11,17.41,17.81,18.11,18.31,18.61,18.91,18.51,18.71,19.01,18.81,18.61,18.71,18.43,18.41],
+          "actuals_test":     [17.10,17.40,17.80,18.10,18.30,18.60,18.90,18.50,18.70,19.00,18.80,18.60,18.70,18.42,18.42],
+          "future_predictions": [18.36, 18.29, 18.22, 18.16, 18.10, 18.06, 18.01]
+        }
+      },
+      "best_algorithm": "lstm",
+      "best_algorithm_name": "الشبكة العصبية LSTM",
+      "best_algorithm_name_en": "LSTM Neural Network",
+      "best_future_predictions": [18.36, 18.29, 18.22, 18.16, 18.10, 18.06, 18.01],
+      "recommendation": {"signal": "بيع", "signal_en": "Sell", "reason": "التنبؤ يشير إلى انخفاض متوقع 2.2%"}
+    }
+  },
+  "comparison_summary": {
+    "ARAMCO": {"best": "LSTM Neural Network", "r2": 0.932},
+    "RJHI":   {"best": "LSTM Neural Network", "r2": 0.918},
+    "SABIC":  {"best": "LSTM Neural Network", "r2": 0.941},
+    "STC":    {"best": "LSTM Neural Network", "r2": 0.944},
+    "SEC":    {"best": "LSTM Neural Network", "r2": 0.921}
+  }
+}
