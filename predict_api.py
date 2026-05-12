@@ -14,18 +14,16 @@ CORS(app)
 
 DIST_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dist')
 
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve_react(path):
-    if path and not path.startswith('api/'):
-        full = os.path.join(DIST_DIR, path)
-        if os.path.exists(full):
-            return send_from_directory(DIST_DIR, path)
-    if not path or not path.startswith('api/'):
-        index = os.path.join(DIST_DIR, 'index.html')
-        if os.path.exists(index):
-            return send_from_directory(DIST_DIR, 'index.html')
-    return jsonify({'error': 'not found'}), 404
+@app.route('/')
+def index():
+    return send_from_directory(DIST_DIR, 'index.html')
+
+@app.errorhandler(404)
+def not_found(e):
+    full = os.path.join(DIST_DIR, request.path.lstrip('/'))
+    if os.path.exists(full) and os.path.isfile(full):
+        return send_from_directory(DIST_DIR, request.path.lstrip('/'))
+    return send_from_directory(DIST_DIR, 'index.html')
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -333,6 +331,10 @@ def health():
     model_name = type(model).__name__
     return jsonify({'status': 'ok', 'model': model_name})
 
+@app.route('/api/test', methods=['POST'], strict_slashes=False)
+def test_post():
+    return jsonify({'status': 'ok', 'received': request.json})
+
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
