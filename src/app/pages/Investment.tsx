@@ -341,7 +341,7 @@ export function Investment() {
       else if (e?.message && e.message !== "API error")
         toast.error(e.message);
       else
-        toast.error(t("تعذر الاتصال بالـ API. تأكد من تشغيل: python predict_api.py","Cannot connect to API. Make sure to run: python predict_api.py"));
+        toast.error(t("تعذر الاتصال بالخادم. أعيدي المحاولة بعد لحظات","Cannot connect to server. Please try again in a moment"));
     } finally {
       setLoadingSuggestion(false);
     }
