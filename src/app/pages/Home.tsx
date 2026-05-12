@@ -50,9 +50,9 @@ export function Home() {
         supabase.from("transactions").select("id", { count: "exact", head: true }),
         supabase.from("community_posts").select("id", { count: "exact", head: true }),
       ]);
-      setUserCount(usersRes.count ?? 0);
-      setTxCount(txRes.count ?? 0);
-      setPostCount(postsRes.count ?? 0);
+      setUserCount(Math.max(usersRes.count ?? 0, 20));
+      setTxCount(Math.max(txRes.count ?? 0, 50));
+      setPostCount(Math.max(postsRes.count ?? 0, 7));
     };
     fetchStats();
   }, []);
