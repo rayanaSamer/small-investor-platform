@@ -8,15 +8,23 @@ import yfinance as yf
 import xgboost as xgb
 import os
 
-app = Flask(__name__, static_folder='dist', static_url_path='')
+app = Flask(__name__)
 CORS(app)
+
+DIST_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dist')
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve_react(path):
-    if path and os.path.exists(os.path.join(app.static_folder, path)):
-        return send_from_directory(app.static_folder, path)
-    return send_from_directory(app.static_folder, 'index.html')
+    if path and not path.startswith('api/'):
+        full = os.path.join(DIST_DIR, path)
+        if os.path.exists(full):
+            return send_from_directory(DIST_DIR, path)
+    if not path or not path.startswith('api/'):
+        index = os.path.join(DIST_DIR, 'index.html')
+        if os.path.exists(index):
+            return send_from_directory(DIST_DIR, 'index.html')
+    return jsonify({'error': 'not found'}), 404
 
 # ---------------------------------------------------------------------------
 # Configuration
