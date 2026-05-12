@@ -1,4 +1,4 @@
 #!/bin/bash
 npm install
-npm run build
+node ./node_modules/.bin/vite build
 pip install -r requirements.txt
