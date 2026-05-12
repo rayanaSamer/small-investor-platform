@@ -8,8 +8,13 @@ import yfinance as yf
 import xgboost as xgb
 import os
 import requests
+import time
 
 app = Flask(__name__)
+
+# كاش بسيط: {ticker: (dataframe, timestamp)}
+_cache: dict = {}
+CACHE_TTL = 1800  # 30 دقيقة
 CORS(app)
 
 DIST_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dist')
@@ -65,10 +70,15 @@ def _yf_session():
     return s
 
 def fetch_stock(ticker: str) -> pd.DataFrame:
+    now = time.time()
+    if ticker in _cache and now - _cache[ticker][1] < CACHE_TTL:
+        return _cache[ticker][0]
     raw = yf.download(ticker, period='6mo', auto_adjust=True, progress=False, session=_yf_session())
     if isinstance(raw.columns, pd.MultiIndex):
         raw.columns = raw.columns.get_level_values(0)
-    return raw[['Open', 'High', 'Low', 'Close', 'Volume']].dropna()
+    df = raw[['Open', 'High', 'Low', 'Close', 'Volume']].dropna()
+    _cache[ticker] = (df, now)
+    return df
 
 
 def add_features(df: pd.DataFrame) -> pd.DataFrame:
