@@ -39,9 +39,9 @@ export function Home() {
     : "hover:bg-white/90 hover:shadow-xl";
 
   /* ── live stats from database ── */
-  const [userCount, setUserCount] = useState(0);
-  const [txCount, setTxCount] = useState(0);
-  const [postCount, setPostCount] = useState(0);
+  const [userCount, setUserCount] = useState(20);
+  const [txCount, setTxCount] = useState(50);
+  const [postCount, setPostCount] = useState(7);
 
   useEffect(() => {
     const fetchStats = async () => {
