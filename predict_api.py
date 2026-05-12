@@ -138,6 +138,7 @@ def project_price(current: float, daily_predicted: float, horizon: str):
     return round(projected, 2), change_pct
 
 # Routes
+@app.route('/api/predict', methods=['POST'])
 @app.route('/predict', methods=['POST'])
 def predict():
     body    = request.json or {}
@@ -177,6 +178,7 @@ def predict():
     })
 
 
+@app.route('/api/prices', methods=['POST'])
 @app.route('/prices', methods=['POST'])
 def prices():
     tickers = request.json.get('tickers', [])
@@ -219,6 +221,7 @@ def prices():
     return jsonify(result)
 
 
+@app.route('/api/portfolio', methods=['POST'])
 @app.route('/portfolio', methods=['POST'])
 def portfolio_suggest():
     body        = request.json or {}
