@@ -1,3 +1,4 @@
+from curl_cffi import requests as cffi_requests
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import joblib
