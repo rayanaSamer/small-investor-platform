@@ -74,27 +74,8 @@ _USER_AGENTS = [
 ]
 
 def _yf_session():
-    """إنشاء session بهيدرز متصفح كامل لتجاوز حظر Yahoo Finance."""
-    s = requests.Session()
-    ua = random.choice(_USER_AGENTS)
-    s.headers.update({
-        'User-Agent': ua,
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9,ar;q=0.8',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-        'Sec-Fetch-Dest': 'document',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-Site': 'none',
-        'Sec-Fetch-User': '?1',
-        'Cache-Control': 'max-age=0',
-    })
-    # جلب كوكيز Yahoo أولاً
-    try:
-        s.get('https://finance.yahoo.com', timeout=10)
-    except Exception:
-        pass
+    """إنشاء session باستخدام curl_cffi لتقليد بصمة TLS متصفح حقيقي."""
+    s = cffi_requests.Session(impersonate="chrome")
     return s
 
 
