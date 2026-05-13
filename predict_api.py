@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import joblib
@@ -9,12 +8,13 @@ import xgboost as xgb
 import os
 import requests
 import time
+import random
 
 app = Flask(__name__)
-
 # كاش بسيط: {ticker: (dataframe, timestamp)}
 _cache: dict = {}
 CACHE_TTL = 1800  # 30 دقيقة
+
 CORS(app)
 
 DIST_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dist')
@@ -33,7 +33,6 @@ def not_found(e):
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
-
 FEATURES = [
     'Open', 'High', 'Low', 'Close', 'Volume',
     'MA_7', 'MA_21', 'MA_50',
@@ -60,31 +59,82 @@ def load_model():
 model    = load_model()
 scaler_X = joblib.load('exported_model/scaler_X.pkl')
 
-
 # ---------------------------------------------------------------------------
 # Helpers (must match the notebook exactly)
 # ---------------------------------------------------------------------------
 
+# قائمة User-Agents متنوعة لتجاوز حظر Yahoo Finance
+_USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+]
+
 def _yf_session():
+    """إنشاء session بهيدرز متصفح كامل لتجاوز حظر Yahoo Finance."""
     s = requests.Session()
-    s.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36'})
+    ua = random.choice(_USER_AGENTS)
+    s.headers.update({
+        'User-Agent': ua,
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9,ar;q=0.8',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Cache-Control': 'max-age=0',
+    })
+    # جلب كوكيز Yahoo أولاً
+    try:
+        s.get('https://finance.yahoo.com', timeout=10)
+    except Exception:
+        pass
     return s
 
-def fetch_stock(ticker: str) -> pd.DataFrame:
+
+def fetch_stock(ticker: str, retries: int = 3) -> pd.DataFrame:
+    """جلب بيانات السهم مع كاش وإعادة محاولة."""
     now = time.time()
     if ticker in _cache and now - _cache[ticker][1] < CACHE_TTL:
         return _cache[ticker][0]
-    raw = yf.download(ticker, period='6mo', auto_adjust=True, progress=False, session=_yf_session())
-    if isinstance(raw.columns, pd.MultiIndex):
-        raw.columns = raw.columns.get_level_values(0)
-    df = raw[['Open', 'High', 'Low', 'Close', 'Volume']].dropna()
-    _cache[ticker] = (df, now)
-    return df
+
+    last_error = None
+    for attempt in range(retries):
+        try:
+            session = _yf_session()
+            raw = yf.download(
+                ticker,
+                period='6mo',
+                auto_adjust=True,
+                progress=False,
+                session=session,
+                timeout=30,
+            )
+            if isinstance(raw.columns, pd.MultiIndex):
+                raw.columns = raw.columns.get_level_values(0)
+
+            df = raw[['Open', 'High', 'Low', 'Close', 'Volume']].dropna()
+
+            if not df.empty and len(df) >= 10:
+                _cache[ticker] = (df, now)
+                return df
+
+        except Exception as e:
+            last_error = e
+            time.sleep(2 * (attempt + 1))  # انتظار تدريجي
+
+    # إذا فشلت كل المحاولات، ارجع DataFrame فارغ
+    print(f"[yfinance] Failed to fetch {ticker} after {retries} retries: {last_error}")
+    return pd.DataFrame()
 
 
 def add_features(df: pd.DataFrame) -> pd.DataFrame:
     d = df.copy()
-
     d['MA_7']  = d['Close'].rolling(7).mean()
     d['MA_21'] = d['Close'].rolling(21).mean()
     d['MA_50'] = d['Close'].rolling(50).mean()
@@ -132,33 +182,30 @@ def get_signal(change_percent: float, volatility: float) -> str:
         return 'بيع'
     return 'انتظار'
 
+
 # عدد أيام التداول لكل أفق زمني
 HORIZON_DAYS        = {'short': 252, 'medium': 630, 'long': 1260}
 HORIZON_LABEL       = {'short': 'سنة واحدة', 'medium': '2-3 سنوات', 'long': '3-6 سنوات'}
 
 # متوسط العائد السنوي التاريخي لسوق تداول السعودي (~8%)
-# المصدر: أداء مؤشر تاسي على المدى البعيد
 HISTORICAL_ANNUAL   = 8.0
 HISTORICAL_DAILY    = (1 + HISTORICAL_ANNUAL / 100) ** (1 / 252) - 1
 
-# وزن إشارة النموذج يتناقص مع طول الأفق —
-# المدى القصير: النموذج موثوق أكثر (0.7)
-# المدى الطويل: الأداء التاريخي موثوق أكثر (0.8)
+# وزن إشارة النموذج يتناقص مع طول الأفق
 HORIZON_MODEL_WEIGHT = {'short': 0.70, 'medium': 0.40, 'long': 0.20}
 
+
 def project_price(current: float, daily_predicted: float, horizon: str):
-    """
-    إسقاط هجين: يمزج إشارة النموذج اليومية مع العائد التاريخي للسوق.
-    المدى القصير يعتمد على النموذج أكثر، والمدى الطويل على التاريخ أكثر.
-    """
     days     = HORIZON_DAYS.get(horizon, 21)
     model_w  = HORIZON_MODEL_WEIGHT.get(horizon, 0.5)
     hist_w   = 1.0 - model_w
+
     model_daily  = (daily_predicted - current) / current
     blended_daily = model_w * model_daily + hist_w * HISTORICAL_DAILY
     projected     = current * (1 + blended_daily) ** days
     change_pct    = round((projected - current) / current * 100, 2)
     return round(projected, 2), change_pct
+
 
 # Routes
 @app.route('/api/predict', methods=['POST'], strict_slashes=False)
@@ -210,11 +257,11 @@ def prices():
 
     result = {}
     try:
-        raw = yf.download(tickers, period='5d', auto_adjust=False, progress=False)
+        session = _yf_session()
+        raw = yf.download(tickers, period='5d', auto_adjust=False, progress=False, session=session, timeout=30)
         if raw.empty:
             return jsonify(result)
 
-        # Multi-ticker download → MultiIndex columns (field, ticker)
         if isinstance(raw.columns, pd.MultiIndex):
             close = raw['Close']
             for ticker in tickers:
@@ -229,7 +276,6 @@ def prices():
                 change_pct = round((change / prev) * 100, 2)
                 result[ticker] = {'price': current, 'change': change, 'changePercent': change_pct}
         else:
-            # Single ticker fallback
             ticker = tickers[0]
             s = raw['Close'].dropna()
             if len(s) >= 2:
@@ -262,6 +308,7 @@ def portfolio_suggest():
             df = fetch_stock(ticker)
             if df.empty or len(df) < 50:
                 continue
+
             df = add_features(df)
             if df.empty:
                 continue
@@ -275,15 +322,11 @@ def portfolio_suggest():
             projected_price, change_pct = project_price(current, daily_predicted, horizon)
             daily_change_pct = round((daily_predicted - current) / current * 100, 4)
 
-            # استبعاد الأسهم ذات التوقع السلبي الشديد من المحفظة المقترحة
             if change_pct < -15.0:
                 continue
 
-            # growth_score: يعتمد على العائد اليومي لضمان التمييز بين الأسهم في كل أفق
             growth_score    = max(0.0, daily_change_pct + 2)
-            # stability_score: مقلوب التقلب — الاستقرار أفضل للمدى الطويل
             stability_score = max(0.0, 20.0 - volatility) / 20.0 * 100
-
             score = growth_score * growth_w + stability_score * stable_w
 
             results.append({
@@ -303,7 +346,6 @@ def portfolio_suggest():
     if not results:
         return jsonify({'error': 'لم نتمكن من تحليل الأسهم'}), 400
 
-    # أفضل سهم لكل قطاع
     best_per_sector: dict = {}
     for r in results:
         sec = r['sector']
@@ -341,6 +383,7 @@ def portfolio_suggest():
 def health():
     model_name = type(model).__name__
     return jsonify({'status': 'ok', 'model': model_name})
+
 
 @app.route('/api/test', methods=['POST'], strict_slashes=False)
 def test_post():
