@@ -74,12 +74,19 @@ def fetch_stock(ticker: str) -> pd.DataFrame:
     now = time.time()
     if ticker in _cache and now - _cache[ticker][1] < CACHE_TTL:
         return _cache[ticker][0]
-    raw = yf.download(ticker, period='6mo', auto_adjust=True, progress=False, session=_yf_session())
-    if isinstance(raw.columns, pd.MultiIndex):
-        raw.columns = raw.columns.get_level_values(0)
-    df = raw[['Open', 'High', 'Low', 'Close', 'Volume']].dropna()
-    _cache[ticker] = (df, now)
-    return df
+    for attempt in range(3):
+        try:
+            raw = yf.download(ticker, period='6mo', auto_adjust=True, progress=False, session=_yf_session())
+            if isinstance(raw.columns, pd.MultiIndex):
+                raw.columns = raw.columns.get_level_values(0)
+            df = raw[['Open', 'High', 'Low', 'Close', 'Volume']].dropna()
+            if not df.empty:
+                _cache[ticker] = (df, now)
+                return df
+        except Exception:
+            if attempt < 2:
+                time.sleep(3)
+    return pd.DataFrame()
 
 
 def add_features(df: pd.DataFrame) -> pd.DataFrame:
@@ -210,7 +217,7 @@ def prices():
 
     result = {}
     try:
-        raw = yf.download(tickers, period='5d', auto_adjust=False, progress=False)
+        raw = yf.download(tickers, period='5d', auto_adjust=False, progress=False, session=_yf_session())
         if raw.empty:
             return jsonify(result)
 
