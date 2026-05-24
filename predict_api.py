@@ -1,20 +1,17 @@
-
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import joblib
 import numpy as np
 import pandas as pd
-import yfinance as yf
 import xgboost as xgb
 import os
-import requests
 import time
+from curl_cffi import requests as cffi_requests
 
 app = Flask(__name__)
-
-# كاش بسيط: {ticker: (dataframe, timestamp)}
 _cache: dict = {}
 CACHE_TTL = 1800  # 30 دقيقة
+
 CORS(app)
 
 DIST_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dist')
@@ -33,7 +30,6 @@ def not_found(e):
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
-
 FEATURES = [
     'Open', 'High', 'Low', 'Close', 'Volume',
     'MA_7', 'MA_21', 'MA_50',
@@ -44,7 +40,6 @@ FEATURES = [
     'High_Low_Range', 'Volume_Ratio',
 ]
 
-# Load model — supports joblib pickle (RandomForest/XGBoost) or XGBoost native JSON
 def load_model():
     for path in ('exported_model/best_model.pkl', 'exported_model/best_model.json'):
         if not os.path.exists(path):
@@ -60,38 +55,104 @@ def load_model():
 model    = load_model()
 scaler_X = joblib.load('exported_model/scaler_X.pkl')
 
-
 # ---------------------------------------------------------------------------
-# Helpers (must match the notebook exactly)
+# Yahoo Finance Direct API (بدون مكتبة yfinance)
 # ---------------------------------------------------------------------------
 
-def _yf_session():
-    s = requests.Session()
-    s.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36'})
-    return s
+def _yahoo_chart(ticker: str, period: str = '6mo', interval: str = '1d') -> pd.DataFrame:
+    """جلب بيانات السهم مباشرة من Yahoo Finance API باستخدام curl_cffi."""
+    url = f'https://query1.finance.yahoo.com/v8/finance/chart/{ticker}'
+    params = {
+        'range': period,
+        'interval': interval,
+        'includePrePost': 'false',
+        'events': '',
+    }
+    session = cffi_requests.Session(impersonate="chrome")
+    resp = session.get(url, params=params, timeout=30)
+    data = resp.json()
 
-def fetch_stock(ticker: str) -> pd.DataFrame:
+    result = data.get('chart', {}).get('result')
+    if not result:
+        return pd.DataFrame()
+
+    chart = result[0]
+    timestamps = chart.get('timestamp', [])
+    quote = chart.get('indicators', {}).get('quote', [{}])[0]
+
+    if not timestamps or not quote:
+        return pd.DataFrame()
+
+    df = pd.DataFrame({
+        'Open':   quote.get('open', []),
+        'High':   quote.get('high', []),
+        'Low':    quote.get('low', []),
+        'Close':  quote.get('close', []),
+        'Volume': quote.get('volume', []),
+    }, index=pd.to_datetime(timestamps, unit='s'))
+
+    df.index.name = 'Date'
+    return df.dropna()
+
+
+def fetch_stock(ticker: str, retries: int = 3) -> pd.DataFrame:
+    """جلب بيانات السهم مع كاش وإعادة محاولة."""
     now = time.time()
     if ticker in _cache and now - _cache[ticker][1] < CACHE_TTL:
         return _cache[ticker][0]
-    for attempt in range(3):
+
+    last_error = None
+    for attempt in range(retries):
         try:
-            raw = yf.download(ticker, period='6mo', auto_adjust=True, progress=False, session=_yf_session())
-            if isinstance(raw.columns, pd.MultiIndex):
-                raw.columns = raw.columns.get_level_values(0)
-            df = raw[['Open', 'High', 'Low', 'Close', 'Volume']].dropna()
-            if not df.empty:
+            df = _yahoo_chart(ticker, period='6mo')
+            if not df.empty and len(df) >= 10:
                 _cache[ticker] = (df, now)
                 return df
-        except Exception:
-            if attempt < 2:
-                time.sleep(3)
+        except Exception as e:
+            last_error = e
+            time.sleep(2 * (attempt + 1))
+
+    print(f"[yahoo] Failed to fetch {ticker} after {retries} retries: {last_error}")
     return pd.DataFrame()
 
 
+def fetch_prices_bulk(tickers: list) -> dict:
+    """جلب أسعار عدة أسهم."""
+    result = {}
+    session = cffi_requests.Session(impersonate="chrome")
+
+    for ticker in tickers:
+        try:
+            url = f'https://query1.finance.yahoo.com/v8/finance/chart/{ticker}'
+            params = {'range': '5d', 'interval': '1d', 'includePrePost': 'false'}
+            resp = session.get(url, params=params, timeout=20)
+            data = resp.json()
+
+            chart_result = data.get('chart', {}).get('result')
+            if not chart_result:
+                continue
+
+            quote = chart_result[0].get('indicators', {}).get('quote', [{}])[0]
+            closes = [c for c in quote.get('close', []) if c is not None]
+
+            if len(closes) >= 2:
+                current = round(closes[-1], 2)
+                prev = round(closes[-2], 2)
+                change = round(current - prev, 2)
+                change_pct = round((change / prev) * 100, 2)
+                result[ticker] = {'price': current, 'change': change, 'changePercent': change_pct}
+        except Exception:
+            continue
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Feature Engineering
+# ---------------------------------------------------------------------------
+
 def add_features(df: pd.DataFrame) -> pd.DataFrame:
     d = df.copy()
-
     d['MA_7']  = d['Close'].rolling(7).mean()
     d['MA_21'] = d['Close'].rolling(21).mean()
     d['MA_50'] = d['Close'].rolling(50).mean()
@@ -125,13 +186,11 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def get_volatility(df: pd.DataFrame) -> float:
-    """Annualised daily std of returns over last 20 sessions (as %)."""
     returns = df['Close'].pct_change().dropna()
     return float(returns.tail(20).std() * 100)
 
 
 def get_signal(change_percent: float, volatility: float) -> str:
-    """Dynamic threshold: half the stock's own daily volatility (min 0.5%)."""
     threshold = max(0.5, volatility * 0.5)
     if change_percent >= threshold:
         return 'شراء'
@@ -139,35 +198,32 @@ def get_signal(change_percent: float, volatility: float) -> str:
         return 'بيع'
     return 'انتظار'
 
-# عدد أيام التداول لكل أفق زمني
+
 HORIZON_DAYS        = {'short': 252, 'medium': 630, 'long': 1260}
 HORIZON_LABEL       = {'short': 'سنة واحدة', 'medium': '2-3 سنوات', 'long': '3-6 سنوات'}
 
-# متوسط العائد السنوي التاريخي لسوق تداول السعودي (~8%)
-# المصدر: أداء مؤشر تاسي على المدى البعيد
 HISTORICAL_ANNUAL   = 8.0
 HISTORICAL_DAILY    = (1 + HISTORICAL_ANNUAL / 100) ** (1 / 252) - 1
 
-# وزن إشارة النموذج يتناقص مع طول الأفق —
-# المدى القصير: النموذج موثوق أكثر (0.7)
-# المدى الطويل: الأداء التاريخي موثوق أكثر (0.8)
 HORIZON_MODEL_WEIGHT = {'short': 0.70, 'medium': 0.40, 'long': 0.20}
 
+
 def project_price(current: float, daily_predicted: float, horizon: str):
-    """
-    إسقاط هجين: يمزج إشارة النموذج اليومية مع العائد التاريخي للسوق.
-    المدى القصير يعتمد على النموذج أكثر، والمدى الطويل على التاريخ أكثر.
-    """
     days     = HORIZON_DAYS.get(horizon, 21)
     model_w  = HORIZON_MODEL_WEIGHT.get(horizon, 0.5)
     hist_w   = 1.0 - model_w
+
     model_daily  = (daily_predicted - current) / current
     blended_daily = model_w * model_daily + hist_w * HISTORICAL_DAILY
     projected     = current * (1 + blended_daily) ** days
     change_pct    = round((projected - current) / current * 100, 2)
     return round(projected, 2), change_pct
 
+
+# ---------------------------------------------------------------------------
 # Routes
+# ---------------------------------------------------------------------------
+
 @app.route('/api/predict', methods=['POST'], strict_slashes=False)
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -215,39 +271,7 @@ def prices():
     if not tickers:
         return jsonify({'error': 'No tickers provided'}), 400
 
-    result = {}
-    try:
-        raw = yf.download(tickers, period='5d', auto_adjust=False, progress=False, session=_yf_session())
-        if raw.empty:
-            return jsonify(result)
-
-        # Multi-ticker download → MultiIndex columns (field, ticker)
-        if isinstance(raw.columns, pd.MultiIndex):
-            close = raw['Close']
-            for ticker in tickers:
-                if ticker not in close.columns:
-                    continue
-                s = close[ticker].dropna()
-                if len(s) < 2:
-                    continue
-                current    = round(float(s.iloc[-1]), 2)
-                prev       = round(float(s.iloc[-2]), 2)
-                change     = round(current - prev, 2)
-                change_pct = round((change / prev) * 100, 2)
-                result[ticker] = {'price': current, 'change': change, 'changePercent': change_pct}
-        else:
-            # Single ticker fallback
-            ticker = tickers[0]
-            s = raw['Close'].dropna()
-            if len(s) >= 2:
-                current    = round(float(s.iloc[-1]), 2)
-                prev       = round(float(s.iloc[-2]), 2)
-                change     = round(current - prev, 2)
-                change_pct = round((change / prev) * 100, 2)
-                result[ticker] = {'price': current, 'change': change, 'changePercent': change_pct}
-    except Exception:
-        pass
-
+    result = fetch_prices_bulk(tickers)
     return jsonify(result)
 
 
@@ -269,6 +293,7 @@ def portfolio_suggest():
             df = fetch_stock(ticker)
             if df.empty or len(df) < 50:
                 continue
+
             df = add_features(df)
             if df.empty:
                 continue
@@ -282,15 +307,11 @@ def portfolio_suggest():
             projected_price, change_pct = project_price(current, daily_predicted, horizon)
             daily_change_pct = round((daily_predicted - current) / current * 100, 4)
 
-            # استبعاد الأسهم ذات التوقع السلبي الشديد من المحفظة المقترحة
             if change_pct < -15.0:
                 continue
 
-            # growth_score: يعتمد على العائد اليومي لضمان التمييز بين الأسهم في كل أفق
             growth_score    = max(0.0, daily_change_pct + 2)
-            # stability_score: مقلوب التقلب — الاستقرار أفضل للمدى الطويل
             stability_score = max(0.0, 20.0 - volatility) / 20.0 * 100
-
             score = growth_score * growth_w + stability_score * stable_w
 
             results.append({
@@ -310,7 +331,6 @@ def portfolio_suggest():
     if not results:
         return jsonify({'error': 'لم نتمكن من تحليل الأسهم'}), 400
 
-    # أفضل سهم لكل قطاع
     best_per_sector: dict = {}
     for r in results:
         sec = r['sector']
@@ -348,6 +368,7 @@ def portfolio_suggest():
 def health():
     model_name = type(model).__name__
     return jsonify({'status': 'ok', 'model': model_name})
+
 
 @app.route('/api/test', methods=['POST'], strict_slashes=False)
 def test_post():

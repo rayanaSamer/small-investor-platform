@@ -58,10 +58,69 @@ export function Community() {
 
   const currentUserId = authUser?.id ?? null;
 
+  // ========== جلب التحديات المنضم لها من Supabase ==========
+  const fetchJoinedChallenges = async () => {
+    if (!authUser?.id) return;
+    try {
+      const { data, error } = await supabase
+        .from("challenge_participants")
+        .select("challenge_id")
+        .eq("user_id", authUser.id);
+      if (error) throw error;
+      if (data) {
+        setJoinedChallenges(new Set(data.map((row: any) => row.challenge_id)));
+      }
+    } catch (e) {
+      console.error("Failed to fetch joined challenges:", e);
+    }
+  };
+
+  // ========== حفظ الانضمام في Supabase ==========
+  const joinChallenge = async (challengeId: string, challengeTitle: string) => {
+    if (!currentUserId) {
+      toast.error(t("يرجى تسجيل الدخول أولاً", "Please login first"));
+      return;
+    }
+    try {
+      const { error } = await supabase
+        .from("challenge_participants")
+        .insert({
+          user_id: currentUserId,
+          challenge_id: challengeId,
+        });
+
+      if (error) {
+        // لو المستخدم منضم مسبقاً (UNIQUE constraint)
+        if (error.code === "23505") {
+          toast.info(t("أنت منضم لهذا التحدي مسبقاً", "You already joined this challenge"));
+          setJoinedChallenges(prev => new Set([...prev, challengeId]));
+          return;
+        }
+        throw error;
+      }
+
+      setJoinedChallenges(prev => new Set([...prev, challengeId]));
+      toast.success(t("تم الانضمام للتحدي! 🎯", "Joined the challenge! 🎯"));
+      addNotification(
+        `انضممت إلى تحدي: ${challengeTitle} 🎯`,
+        `Joined challenge: ${challengeTitle} 🎯`,
+        "challenge"
+      );
+    } catch (e) {
+      console.error("Failed to join challenge:", e);
+      toast.error(t("فشل الانضمام، حاول مجدداً", "Failed to join, try again"));
+    }
+  };
+
   useEffect(() => {
     fetchPosts();
     fetchActiveMembers();
   }, []);
+
+  // جلب التحديات المنضم لها لما المستخدم يسجّل دخول أو الصفحة تفتح
+  useEffect(() => {
+    fetchJoinedChallenges();
+  }, [authUser?.id]);
 
   useEffect(() => {
     if (activeTab === "challenges") fetchChallengeData();
@@ -548,12 +607,7 @@ export function Community() {
                         </div>
                       ) : (
                         <button
-                          onClick={() => {
-                            if (!currentUserId) { toast.error(t("يرجى تسجيل الدخول أولاً","Please login first")); return; }
-                            setJoinedChallenges(prev => new Set([...prev, ch.id]));
-                            toast.success(t("تم الانضمام للتحدي! 🎯","Joined the challenge! 🎯"));
-                            addNotification(`انضممت إلى تحدي: ${ch.title} 🎯`, `Joined challenge: ${ch.title} 🎯`, "challenge");
-                          }}
+                          onClick={() => joinChallenge(ch.id, ch.title)}
                           className={`w-full py-2.5 rounded-xl font-semibold text-sm text-white bg-gradient-to-r ${ch.gradient} hover:opacity-90 transition-all shadow-sm`}>
                           {t("الانضمام للتحدي","Join Challenge")}
                         </button>
