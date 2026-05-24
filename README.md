@@ -35,7 +35,7 @@ A smart web platform that helps beginner investors manage their finances and mak
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 - Node.js (v18+)
