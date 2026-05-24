@@ -107,6 +107,6 @@ small-investor-platform/
 
 ---
 
-## 📄 License
+##  License
 
 This project is for academic purposes — Graduation Project.
